@@ -30,11 +30,16 @@ public class WebServer {
         try {
             serverSocket = new ServerSocket(port);
             System.out.println("Server started ... listening on port " + port + " ...");
+            Socket conn = null;
             while (true) {
                 // waits until client requests a connection, then returns connection (socket)
-                Socket conn = serverSocket.accept();
-                System.out.println("Server got new connection request from " + conn.getInetAddress());
-
+                try {
+                    conn = serverSocket.accept();
+                    conn.setSoTimeout(2000);
+                    System.out.println("Server got new connection request from " + conn.getInetAddress());
+                } catch (IOException ioe) {
+                    System.err.println("IO Exception: " + ioe.getMessage());
+                }
                 // create new handler for this connection
                 ConnectionHandler ch = new ConnectionHandler(conn);
                 ch.start(); // start handler thread
