@@ -13,6 +13,9 @@ public class WebServerMain {
             System.out.println("Usage: ClientMain <hostname>");
             System.exit(1);
         }
-        WebServer webServer = new WebServer(args[0], args[1]);
+        String rootDir = args[0];
+        int port = Integer.parseInt(args[1]);
+        WebServer webServer = new WebServer(rootDir, port);
+        webServer.start();
     }
 }
