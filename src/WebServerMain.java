@@ -10,7 +10,7 @@
 public class WebServerMain {
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: ClientMain <hostname>");
+            System.out.println("Usage: java WebServerMain <document_root> <port>");
             System.exit(1);
         }
         String rootDir = args[0];
