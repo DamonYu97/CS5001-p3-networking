@@ -2,7 +2,11 @@
  * Copyright 2021 Damon Yu
  */
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * @author damonyu
@@ -20,8 +24,38 @@ public class ConnectionHandler extends Thread{
 
     @Override
     public void run() {
-
+        while (!connection.isClosed()) {
+            HttpRequest httpRequest = null;
+            try {
+                InputStream inputStream = connection.getInputStream();
+                OutputStream outputStream = connection.getOutputStream();
+                httpRequest = InputSteamReader.readRequest(inputStream);
+                if (httpRequest != null) {
+                    System.out.println(httpRequest.getMethod() + " " + currentThread());
+                    //TODO handle the request
+                }
+            } catch (SocketException e) {
+                System.out.println("Socket Exception: " + currentThread() + e.getMessage());
+            } catch (IOException ioe) {
+                System.err.println("IO Exception: " + currentThread()+ ioe.getMessage());
+            }
+            if (httpRequest == null) {
+                try {
+                    connection.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                Thread.sleep(3000); // pause before trying again ...
+            } catch (InterruptedException e) {
+                System.err.println("Interrupted Exception: " + e.getMessage());
+            }
+        }
+        //System.out.println(currentThread() + "end");
     }
+
+
 
     private void handle(HttpRequest request, HttpResponse response) {
 
@@ -34,4 +68,5 @@ public class ConnectionHandler extends Thread{
     private void doHead(HttpRequest request, HttpResponse response) {
 
     }
+
 }
