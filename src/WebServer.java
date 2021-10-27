@@ -43,6 +43,11 @@ public class WebServer {
                 // create new handler for this connection
                 ConnectionHandler ch = new ConnectionHandler(conn);
                 ch.start(); // start handler thread
+                try {
+                    Thread.sleep(2000); // pause before trying again ...
+                } catch (InterruptedException e) {
+                    System.err.println("Interrupted Exception: " + e.getMessage());
+                }
             }
         } catch (IOException ioe) {
             System.out.println("Oops " + ioe.getMessage());
