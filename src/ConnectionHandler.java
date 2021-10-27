@@ -29,7 +29,7 @@ public class ConnectionHandler extends Thread{
             try {
                 InputStream inputStream = connection.getInputStream();
                 OutputStream outputStream = connection.getOutputStream();
-                httpRequest = InputSteamReader.readRequest(inputStream);
+                httpRequest = HttpInputStreamReader.readRequest(inputStream);
                 if (httpRequest != null) {
                     System.out.println(httpRequest.getMethod() + " " + currentThread());
                     //TODO handle the request
@@ -42,12 +42,13 @@ public class ConnectionHandler extends Thread{
             if (httpRequest == null) {
                 try {
                     connection.close();
+                    System.out.println("Terminating the connection");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
             try {
-                Thread.sleep(3000); // pause before trying again ...
+                Thread.sleep(2000); // pause before trying again ...
             } catch (InterruptedException e) {
                 System.err.println("Interrupted Exception: " + e.getMessage());
             }
