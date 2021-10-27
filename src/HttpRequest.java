@@ -35,23 +35,12 @@ public class HttpRequest implements Serializable {
         return method;
     }
 
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
     public String getResource() {
         return resource;
-    }
-
-    public void setResource(String resource) {
-        this.resource = resource;
     }
 
     public String getProtocolVersion() {
         return protocolVersion;
     }
 
-    public void setProtocolVersion(String protocolVersion) {
-        this.protocolVersion = protocolVersion;
-    }
 }

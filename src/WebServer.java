@@ -15,10 +15,12 @@ public class WebServer {
     private ServerSocket serverSocket;
     private String rootDir;
     private int port;
+    private String serverName;
 
-    public WebServer(String rootDir, int port) {
+    public WebServer(String rootDir, int port, String serverName) {
         this.rootDir = rootDir;
         this.port = port;
+        this.serverName = serverName;
     }
 
     public WebServer() {
@@ -41,7 +43,7 @@ public class WebServer {
                     System.err.println("IO Exception: " + ioe.getMessage());
                 }
                 // create new handler for this connection
-                ConnectionHandler ch = new ConnectionHandler(conn);
+                ConnectionHandler ch = new ConnectionHandler(conn, rootDir);
                 ch.start(); // start handler thread
                 try {
                     Thread.sleep(2000); // pause before trying again ...

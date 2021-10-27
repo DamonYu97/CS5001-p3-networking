@@ -2,6 +2,9 @@
  * Copyright 2021 Damon Yu
  */
 
+import java.io.File;
+import java.nio.file.Path;
+
 /**
  * @author ly40
  * @version 1.0
@@ -10,12 +13,18 @@
 public class WebServerMain {
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: java WebServerMain <document_root> <port>");
+            System.err.println("Usage: java WebServerMain <document_root> <port>");
             System.exit(1);
         }
         String rootDir = args[0];
+        File root = new File(rootDir);
+        if (!root.exists()) {
+            System.err.println("Root directory not found!");
+            System.exit(1);
+        }
         int port = Integer.parseInt(args[1]);
-        WebServer webServer = new WebServer(rootDir, port);
+        String serverName = "Damon Java Web Server";
+        WebServer webServer = new WebServer(rootDir, port, serverName);
         webServer.start();
     }
 }

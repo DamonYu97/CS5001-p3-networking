@@ -2,11 +2,11 @@
  * Copyright 2021 Damon Yu
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author damonyu
@@ -17,9 +17,11 @@ public class ConnectionHandler extends Thread{
     private static final String METHOD_HEAD = "HEAD";
     private static final String METHOD_GET = "GET";
     private Socket connection;
+    private String rootDir;
 
-    public ConnectionHandler(Socket connection) {
+    public ConnectionHandler(Socket connection, String rootDir) {
         this.connection = connection;
+        this.rootDir = rootDir;
     }
 
     @Override
@@ -33,6 +35,23 @@ public class ConnectionHandler extends Thread{
                 if (httpRequest != null) {
                     System.out.println(httpRequest.getMethod() + " " + currentThread());
                     //TODO handle the request
+                    String method = httpRequest.getMethod();
+                    String resourcePathString = httpRequest.getResource();
+                    HttpResponse response = null;
+                    if (METHOD_GET.equals(method)) {
+                        //search the resource
+                        Path resourcePath = Path.of(rootDir + resourcePathString);
+                        if (Files.isDirectory(resourcePath)) {
+                            resourcePath = resourcePath.resolve("index.html");
+                        }
+                        if (Files.exists(resourcePath)) {
+
+                        } else {
+                            response = HttpResponse.fail(HttpResponse.NOT_FOUND);
+                        }
+                    } else if (METHOD_HEAD.equals(method)) {
+
+                    }
                 }
             } catch (SocketException e) {
                 System.out.println("Socket Exception: " + currentThread() + e.getMessage());
