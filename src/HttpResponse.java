@@ -2,9 +2,11 @@
  * Copyright 2021 Damon Yu
  */
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author damonyu
@@ -12,30 +14,69 @@ import java.util.ArrayList;
  * @since 24/10/2021
  */
 public class HttpResponse implements Serializable {
-    public static final int OK = 200;
-    public static final int NOT_FOUND = 404;
-    private static final int NOT_IMPLEMENTED = 501;
     private HttpResponseHeader responseHeader;
-    private ArrayList<Byte> content;
+    private byte[] content;
+    //use Path instead of String, because those paths can be validated when initializing the server.
+    private transient Map<Integer, Path> failMapper;
 
-    private HttpResponse() {
+    public HttpResponse(HttpResponseHeader httpResponseHeader) {
+        this(httpResponseHeader, null);
     }
 
-    public static HttpResponse success(Path contentPath, String serverName, String protocolName) {
-
-        return new HttpResponse();
+    public HttpResponse(HttpResponseHeader httpResponseHeader, Map<Integer, Path> failMapper) {
+        this.responseHeader = httpResponseHeader;
+        this.failMapper = failMapper;
     }
 
-    public static HttpResponse fail(int code) {
-        ResponseCode responseCode = null;
-        switch (code) {
+    public void success(byte[] content, String contentType) {
+        this.content = content;
+        responseHeader.setContentLength(content.length);
+        responseHeader.setContentType(contentType);
+        responseHeader.setResponseCode(ResponseCode.OK);
+    }
+
+    public void fail(ResponseCode responseCode) {
+        if (failMapper != null) {
+            Path failPagePath = failMapper.get(responseCode.getCode());
+            if (failPagePath!= null && Files.exists(failPagePath) && !Files.isDirectory(failPagePath)) {
+                try {
+                    content = Files.readAllBytes(failPagePath);
+                    responseHeader.setContentType(Files.probeContentType(failPagePath));
+                    responseHeader.setContentLength(content.length);
+                    responseHeader.setResponseCode(responseCode);
+                    return;
+                } catch (IOException e) {
+                    //TODO content too long
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        switch (responseCode) {
             case NOT_FOUND:
-                responseCode = ResponseCode.NOT_FOUND;
+                fail(responseCode, "The requested resources are not found!");
                 break;
             default:
-                responseCode = ResponseCode.NOT_IMPLEMENTED;
+                fail(responseCode, "Unsupported Service!");
         }
-        return new HttpResponse();
     }
 
+    public void fail(ResponseCode responseCode, String message) {
+        content = message.getBytes();
+        responseHeader.setContentLength(content.length);
+        responseHeader.setContentType("text/html");
+        responseHeader.setResponseCode(responseCode);
+    }
+
+    public void removeContent() {
+        content = null;
+    }
+
+    public HttpResponseHeader getResponseHeader() {
+        return responseHeader;
+    }
+
+    public byte[] getContent() {
+        return content;
+    }
 }

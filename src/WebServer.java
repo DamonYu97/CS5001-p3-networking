@@ -5,6 +5,9 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author ly40
@@ -13,25 +16,18 @@ import java.net.Socket;
  */
 public class WebServer {
     private ServerSocket serverSocket;
-    private String rootDir;
-    private int port;
-    private String serverName;
+    private ServerContext serverContext;
+    private ExecutorService executorService;
 
-    public WebServer(String rootDir, int port, String serverName) {
-        this.rootDir = rootDir;
-        this.port = port;
-        this.serverName = serverName;
-    }
-
-    public WebServer() {
-        this.rootDir = Configuration.DEFAULT_ROOT_DIRECTORY;
-        this.port = Configuration.DEFAULT_PORT;
+    public WebServer(ServerContext serverContext) {
+        this.serverContext = serverContext;
+        executorService = Executors.newFixedThreadPool(serverContext.getThreadPoolSize());
     }
 
     public void start() {
         try {
-            serverSocket = new ServerSocket(port);
-            System.out.println("Server started ... listening on port " + port + " ...");
+            serverSocket = new ServerSocket(serverContext.getPort());
+            System.out.println("Server started ... listening on port " + serverContext.getPort() + " ...");
             Socket conn = null;
             while (true) {
                 // waits until client requests a connection, then returns connection (socket)
@@ -43,8 +39,7 @@ public class WebServer {
                     System.err.println("IO Exception: " + ioe.getMessage());
                 }
                 // create new handler for this connection
-                ConnectionHandler ch = new ConnectionHandler(conn, rootDir);
-                ch.start(); // start handler thread
+                executorService.execute(new ConnectionHandler(conn, serverContext));
                 try {
                     Thread.sleep(2000); // pause before trying again ...
                 } catch (InterruptedException e) {

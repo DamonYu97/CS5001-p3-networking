@@ -7,21 +7,24 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author damonyu
  * @version 1.0
  * @since 24/10/2021
  */
-public class ConnectionHandler extends Thread{
+public class ConnectionHandler implements Runnable {
     private static final String METHOD_HEAD = "HEAD";
     private static final String METHOD_GET = "GET";
+    private static final String HTTP_PROTOCOL = "HTTP/1.1";
     private Socket connection;
-    private String rootDir;
+    private ServerContext serverContext;
 
-    public ConnectionHandler(Socket connection, String rootDir) {
+    public ConnectionHandler(Socket connection, ServerContext serverContext) {
         this.connection = connection;
-        this.rootDir = rootDir;
+        this.serverContext = serverContext;
     }
 
     @Override
@@ -33,38 +36,19 @@ public class ConnectionHandler extends Thread{
                 OutputStream outputStream = connection.getOutputStream();
                 httpRequest = HttpInputStreamReader.readRequest(inputStream);
                 if (httpRequest != null) {
-                    System.out.println(httpRequest.getMethod() + " " + currentThread());
+                    System.out.println(httpRequest.getMethod() + " " + Thread.currentThread());
                     //TODO handle the request
-                    String method = httpRequest.getMethod();
-                    String resourcePathString = httpRequest.getResource();
-                    HttpResponse response = null;
-                    if (METHOD_GET.equals(method)) {
-                        //search the resource
-                        Path resourcePath = Path.of(rootDir + resourcePathString);
-                        if (Files.isDirectory(resourcePath)) {
-                            resourcePath = resourcePath.resolve("index.html");
-                        }
-                        if (Files.exists(resourcePath)) {
-
-                        } else {
-                            response = HttpResponse.fail(HttpResponse.NOT_FOUND);
-                        }
-                    } else if (METHOD_HEAD.equals(method)) {
-
-                    }
+                    HttpResponse response = handle(httpRequest);
+                    HttpOutputStreamWriter.writeResponse(response, outputStream);
+                    outputStream.flush();
+                    outputStream.close();
+                    inputStream.close();
+                    connection.close();
                 }
             } catch (SocketException e) {
-                System.out.println("Socket Exception: " + currentThread() + e.getMessage());
+                System.out.println("Socket Exception: " + e.getMessage());
             } catch (IOException ioe) {
-                System.err.println("IO Exception: " + currentThread()+ ioe.getMessage());
-            }
-            if (httpRequest == null) {
-                try {
-                    connection.close();
-                    System.out.println("Terminating the connection");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                System.err.println("IO Exception: " + ioe.getMessage());
             }
             try {
                 Thread.sleep(2000); // pause before trying again ...
@@ -75,18 +59,58 @@ public class ConnectionHandler extends Thread{
         //System.out.println(currentThread() + "end");
     }
 
-
-
-    private void handle(HttpRequest request, HttpResponse response) {
-
+    private HttpResponse handle(HttpRequest request) {
+        HttpResponseHeader responseHeader = new HttpResponseHeader(HTTP_PROTOCOL, serverContext.getName());
+        HttpResponse response = new HttpResponse(responseHeader, mapFailPage(serverContext));
+        String method = request.getMethod();
+        if (METHOD_GET.equals(method)) {
+            doGet(request, response);
+        } else if (METHOD_HEAD.equals(method)) {
+            doHead(request, response);
+        } else {
+            response.fail(ResponseCode.NOT_IMPLEMENTED);
+        }
+        return response;
     }
 
     private void doGet(HttpRequest request, HttpResponse response) {
-
+        //search the resource
+        String resourcePathString = request.getResource();
+        Path resourcePath = Path.of(serverContext.getRootDir() + resourcePathString);
+        if (Files.isDirectory(resourcePath)) {
+            resourcePath = resourcePath.resolve("index.html");
+        }
+        if (Files.exists(resourcePath)) {
+            try {
+                byte[] content = Files.readAllBytes(resourcePath);
+                String contentType = Files.probeContentType(resourcePath);
+                response.success(content, contentType);
+            } catch (IOException e) {
+                //TODO content too long
+                e.printStackTrace();
+            }
+        } else {
+            response.fail(ResponseCode.NOT_FOUND);
+        }
     }
 
     private void doHead(HttpRequest request, HttpResponse response) {
+        doGet(request, response);
+        response.removeContent();
+    }
 
+    private Map<Integer, Path> mapFailPage(ServerContext context) {
+        Map<Integer, Path> map = new HashMap<>();
+        Path path;
+        if (context.getNotFoundPage() != null) {
+            path = Path.of(context.getRootDir() + context.getNotFoundPage());
+            map.put(ResponseCode.NOT_FOUND.getCode(), path);
+        }
+        if (context.getNotImplementedPage() != null) {
+            path = Path.of(context.getRootDir() + context.getNotImplementedPage());
+            map.put(ResponseCode.NOT_IMPLEMENTED.getCode(), path);
+        }
+        return map.isEmpty() ? null : map;
     }
 
 }

@@ -53,9 +53,14 @@ public class HttpInputStreamReader {
     private static String[] readLines(InputStream inputStream) throws IOException {
         BufferedReader br = new BufferedReader(new java.io.InputStreamReader(inputStream));
         ArrayList<String> lines = new ArrayList<>();
-        String line = null;
-        while ((line = br.readLine()) != null && line.length() > 0) {
+        String line = br.readLine();
+        while (line != null && line.length() > 0) {
             lines.add(line);
+            try {
+                line = br.readLine();
+            } catch (IOException e) {
+                break;
+            }
             //System.out.println(line.length());
         }
         String[] result = new String[lines.size()];

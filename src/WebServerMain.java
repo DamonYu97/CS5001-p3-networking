@@ -24,7 +24,10 @@ public class WebServerMain {
         }
         int port = Integer.parseInt(args[1]);
         String serverName = "Damon Java Web Server";
-        WebServer webServer = new WebServer(rootDir, port, serverName);
+        ServerContext serverContext = new ServerContext(serverName, port, rootDir);
+        serverContext.setNotFoundPage(Configuration.NOT_FOUND_PAGE);
+        serverContext.setThreadPoolSize(Configuration.NUMBER_OF_THREAD_POOL);
+        WebServer webServer = new WebServer(serverContext);
         webServer.start();
     }
 }
