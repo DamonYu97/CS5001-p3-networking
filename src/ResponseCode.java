@@ -1,11 +1,7 @@
-/*
- * Copyright 2021 Damon Yu
- */
-
 /**
- * @author ly40
+ * ResponseCode enum lists all supported response code for HTTP.
+ * @author 200011181
  * @version 1.0
- * @since 27/10/2021
  */
 public enum ResponseCode {
     OK(200, "OK"),

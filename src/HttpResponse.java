@@ -1,22 +1,22 @@
-/*
- * Copyright 2021 Damon Yu
- */
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
- * @author damonyu
+ * HttpRequest class stores http response information and behavior.
+ * @author 200011181
  * @version 1.0
- * @since 24/10/2021
  */
 public class HttpResponse implements Serializable {
     private HttpResponseHeader responseHeader;
     private byte[] content;
-    //use Path instead of String, because those paths can be validated when initializing the server.
+    /**
+     * Map the fail code with related web page file path.
+     * use Path instead of String, because those paths can be validated when initializing the server.
+     */
     private transient Map<Integer, Path> failMapper;
 
     public HttpResponse(HttpResponseHeader httpResponseHeader) {
@@ -38,7 +38,7 @@ public class HttpResponse implements Serializable {
     public void fail(ResponseCode responseCode) {
         if (failMapper != null) {
             Path failPagePath = failMapper.get(responseCode.getCode());
-            if (failPagePath!= null && Files.exists(failPagePath) && !Files.isDirectory(failPagePath)) {
+            if (failPagePath != null && Files.exists(failPagePath) && !Files.isDirectory(failPagePath)) {
                 try {
                     content = Files.readAllBytes(failPagePath);
                     responseHeader.setContentType(Files.probeContentType(failPagePath));
@@ -46,7 +46,6 @@ public class HttpResponse implements Serializable {
                     responseHeader.setResponseCode(responseCode);
                     return;
                 } catch (IOException e) {
-                    //TODO content too long
                     e.printStackTrace();
                 }
             }
@@ -78,5 +77,17 @@ public class HttpResponse implements Serializable {
 
     public byte[] getContent() {
         return content;
+    }
+
+    public String getContentType() {
+        return responseHeader.getContentType();
+    }
+
+    public ResponseCode getResponseCode() {
+        return responseHeader.getResponseCode();
+    }
+
+    public void setSupportedMethods(List<String> supportedMethods) {
+        this.responseHeader.setSupportedMethods(supportedMethods);
     }
 }

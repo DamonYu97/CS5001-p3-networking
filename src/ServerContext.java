@@ -1,11 +1,7 @@
-/*
- * Copyright 2021 Damon Yu
- */
-
 /**
- * @author damonyu
+ * ServerContext class stores the information of a web server.
+ * @author 200011181
  * @version 1.0
- * @since 28/10/2021
  */
 public class ServerContext {
     private String name;
@@ -14,6 +10,7 @@ public class ServerContext {
     private String notFoundPage;
     private String notImplementedPage;
     private int threadPoolSize;
+    private int timeout;
 
     public ServerContext(String name, int port, String rootDir) {
         this.name = name;
@@ -55,5 +52,13 @@ public class ServerContext {
 
     public void setThreadPoolSize(int threadPoolSize) {
         this.threadPoolSize = threadPoolSize;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
     }
 }
